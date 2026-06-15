@@ -1,0 +1,14 @@
+{
+  "name": "backend-server",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "init-db": "node init-db.js",
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "sqlite3": "^6.0.1"
+  }
+}

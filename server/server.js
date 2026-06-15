@@ -7,7 +7,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 app.use((req, res, next) => {
     res.header("Access-Control-Allow-Origin", "*");
@@ -17,17 +17,17 @@ app.use((req, res, next) => {
 
 const dbPath = path.resolve(__dirname, 'database.sqlite');
 const db = new sqlite3.Database(dbPath, (err) => {
-    if (err){
+    if (err) {
         console.error('資料庫連線失敗:', (err.message));
     } else {
         console.log('成功連線至 SQLite 資料庫');
     }
 });
 
-app.get('/professors', (req, res) => {
+const getProfessors = (req, res) => {
     db.all('SELECT * FROM professors', [], (err, rows) => {
         if (err) {
-            res.status(500).json({ error: err.message});
+            res.status(500).json({ error: err.message });
             return;
         }
         res.json({
@@ -35,6 +35,21 @@ app.get('/professors', (req, res) => {
             data: rows
         });
     });
+};
+
+app.get('/professors', getProfessors);
+app.get('/api/professors', getProfessors);
+
+// 託管前端編譯後的靜態檔案
+const frontendDistPath = path.resolve(__dirname, '../client/dist');
+app.use(express.static(frontendDistPath));
+
+// SPA Catch-all 路由 (使用 app.use 避免 Express 5 path-to-regexp 語法衝突)
+app.use((req, res, next) => {
+    if (req.method === 'GET' && !req.path.startsWith('/api') && req.path !== '/professors') {
+        return res.sendFile(path.join(frontendDistPath, 'index.html'));
+    }
+    next();
 });
 
 app.listen(port, () => {

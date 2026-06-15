@@ -7,7 +7,7 @@ const __dirname = path.dirname(__filename);
 
 const dbPath = path.resolve(__dirname, 'database.sqlite');
 const db = new sqlite3.Database(dbPath, (err) => {
-    if (err){
+    if (err) {
         console.error('資料庫連線失敗:', (err.message));
     } else {
         console.log('成功連線並建立 SQLite 資料庫檔案');
@@ -16,6 +16,10 @@ const db = new sqlite3.Database(dbPath, (err) => {
 
 db.serialize(() => {
     console.log('開始初始化資料表...');
+    // 每次初始化前先清空舊資料表，確保資料不重複
+    db.run(`DROP TABLE IF EXISTS professors`);
+    db.run(`DROP TABLE IF EXISTS tags`);
+
     db.run(`
         CREATE TABLE IF NOT EXISTS professors (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -74,12 +78,12 @@ db.serialize(() => {
     insertProfessor.finalize();
 
     db.all("SELECT * FROM professors", [], (err, rows) => {
-        if (err){
+        if (err) {
             throw err;
         }
         console.log('目前教授清單:');
-        rows.forEach((row) =>{
-            console.log(`[${row.id}] ${row.name} (${row.department}) - ${row.description}`)
+        rows.forEach((row) => {
+            console.log(`[${row.id}] ${row.name} - ${row.description}`)
         });
     });
 });
