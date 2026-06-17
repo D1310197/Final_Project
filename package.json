@@ -3,12 +3,18 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "init-db": "npm run init-db --prefix server",
     "start": "npm run start --prefix server",
     "dev:server": "npm run dev --prefix server",
     "dev:client": "npm run dev --prefix client",
     "build:client": "npm run build --prefix client",
+    "build": "npm run build:client",
+    "azure:setup": "npm install --prefix server && npm install --prefix client --include=dev && npm run build:client",
+    "postinstall": "npm run azure:setup",
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\""
   },
   "dependencies": {

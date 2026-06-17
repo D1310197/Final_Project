@@ -8,9 +8,18 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const port = process.env.PORT || 3000;
+const allowedOrigins = new Set([
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'https://tutorsearch-b0gbfnhcd4dudxdh.japaneast-01.azurewebsites.net'
+]);
 
 app.use((req, res, next) => {
-    res.header("Access-Control-Allow-Origin", "*");
+    const origin = req.headers.origin;
+    if (origin && allowedOrigins.has(origin)) {
+        res.header("Access-Control-Allow-Origin", origin);
+    }
+    res.header("Vary", "Origin");
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
     next();
 });
@@ -54,5 +63,6 @@ app.use((req, res, next) => {
 
 app.listen(port, () => {
     console.log(` 伺服器已啟動!`);
-    console.log(`👉 請打開瀏覽器測試 API： http://localhost:${port}/professors`)
+    console.log(`本機 API： http://localhost:${port}/api/professors`);
+    console.log('Azure 網站：https://tutorsearch-b0gbfnhcd4dudxdh.japaneast-01.azurewebsites.net');
 });

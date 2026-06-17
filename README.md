@@ -71,18 +71,3 @@ npm.cmd start
 http://localhost:3000
 ```
 
-## 常見問題
-
-如果 `npm run dev` 無法執行，請先確認三個位置都已安裝套件：
-
-```powershell
-npm.cmd install
-npm.cmd install --prefix server
-npm.cmd install --prefix client
-```
-
-如果資料查詢沒有結果或資料異常，可以重新初始化資料庫：
-
-```powershell
-npm.cmd run init-db
-```
