@@ -9,7 +9,7 @@ import {
   Tag
 } from 'lucide-vue-next';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 const professors = ref([]);
 const query = ref('');
@@ -26,17 +26,26 @@ const examples = [
 ];
 
 const synonymGroups = [
-  ['ai', '人工智慧', '機器學習', '深度學習', '類神經網路', '智慧代理人', '資料探勘'],
-  ['nlp', '自然語言處理', '文本', '文字探勘', '生成', '聊天機器人', '語言模型'],
-  ['security', '資訊安全', '網路安全', '密碼學', '區塊鏈', '零信任', '資安', '取證'],
-  ['image', '影像處理', '電腦視覺', '醫療影像', '圖像', '人臉識別', '浮水印'],
-  ['iot', '物聯網', '智慧聯網', '嵌入式系統', '車載網路', '行動計算', '邊緣運算'],
-  ['cloud', '雲端計算', 'DevOps', '分散式', '系統設計', '軟體工程'],
-  ['hardware', 'VLSI', '半導體', '晶片', '電子電路', '積體電路'],
-  ['data', '資料庫', '資料分析', '統計', '預測分析', '商務智慧', '資料科學']
+  ['ai', '人工智慧', 'ai', '機器學習', '深度學習', '類神經網路', '神經網路', '智慧代理人', '生成式人工智慧', '生成式ai', '聯邦式學習', '異常檢測', '推薦系統'],
+  ['nlp', '自然語言處理', '自然口語處理', '語音辨識', '計算語言學', '文本', '文字探勘', '中文文本', '中文故事', '故事生成', '生成', '聊天機器人', '語言模型'],
+  ['security', '資訊安全', '資安', '網路安全', '網安', '密碼學', '密碼分析', '電腦密碼學', '區塊鏈', '零信任', '取證', '信息取證', '藏密分析', '硬體安全', '物聯網安全', '行動商務安全', '電子商務安全', '惡意流量分析'],
+  ['image', '影像處理', '影像辨識', '物件偵測', '電腦視覺', '醫療影像', '圖像', '數位影像', '人臉識別', '生物識別', '浮水印', '數位浮水印', '資訊隱藏', '圖像與信號處理', '信號處理'],
+  ['iot', '物聯網', 'iot', '智慧聯網', '嵌入式系統', '車載網路', '車聯網', '人聯網', '感測網路', '無線感測網路', '無線隨意網路', '行動計算', '行動網路', '無線網路', '無線通訊', '邊緣運算', '微控制器'],
+  ['cloud', '雲端計算', '雲端運算', '雲端服務', '雲端', 'devops', '服務導向運算', '分散式', '分散式系統', '平行分散式計算', '自我穩定系統'],
+  ['software', '軟體工程', '軟體開發', '軟體系統開發', '設計樣式', '軟體架構', '軟體品質', '軟體品質驗證', '物件導向', '物件設計', '專案管理', '作業系統', '軟體整合', '軟體重用'],
+  ['hardware', 'vlsi', '半導體', '晶片', '電子電路', '積體電路', '電磁相容', '電腦輔助設計', '高效能低功率', '多核心系統', '嵌入式周邊驅動'],
+  ['data', '資料庫', '資料庫設計', '資料分析', '巨量資料', '大數據', '大數據分析', '資料科學', '資料探勘', '商務智慧', '可解釋人工智慧', '演算法', '計算機演算法'],
+  ['statistics', '統計', '模糊統計', '統計建模', '機率統計', '機率論', '預測分析', '模擬理論', '系統思維', '機率'],
+  ['bio-medical', '生物資訊', '結構生物資訊', '計算系統生物', '醫療資訊', '智慧醫療', '醫學影像', '青光眼預測', '腦機介面', '認知神經科學', '生心理量測'],
+  ['graphics-vr', '電腦圖學', '圖學理論', '虛擬實境', 'vr', '擴增實境', 'ar', '延展實境', 'xr'],
+  ['education', '教育資料科學', '資訊教育', '學習科技', '創新學習', '電腦輔助語言學習', '教育科技'],
+  ['robotics-mobility', '機器人', '自駕車', '無人機', '行動應用', '行動應用設計'],
+  ['business', '電子商務', '行動商務', '推薦系統', '群眾外包'],
+  ['kansei', '感性工學', '感性工程', '感性設計', '感性分析', '情感運算', '使用者體驗', '人因工程']
 ];
 
 const stopWords = new Set(['研究', '專題', '應用', '系統', '技術', '相關', '想做', '使用', '分析', '設計', '與', '和', '的']);
+const weakConcepts = new Set(['資訊', '技術', '系統', '設計', '應用', '研究', '分析', '工程', '工學', '計算', '網路']);
 
 const dictionary = computed(() => {
   const words = new Set();
@@ -48,11 +57,21 @@ const dictionary = computed(() => {
 });
 
 const documents = computed(() =>
-  professors.value.map((professor) => ({
-    ...professor,
-    tokens: expandSynonyms(tokenize(`${professor.name} ${professor.description}`)),
-    tags: extractTags(professor.description)
-  }))
+  professors.value.map((professor) => {
+    const searchText = `${professor.name} ${professor.description}`;
+    const tags = extractTags(professor.description);
+    const tokens = buildSearchTokens(`${searchText} ${tags.join(' ')}`);
+    return {
+      ...professor,
+      tags,
+      tagSet: new Set(tags),
+      tokens,
+      tokenSet: new Set(tokens),
+      fuzzyTokens: tokenize(searchText),
+      normalizedText: normalizeSearchText(searchText),
+      searchableTags: tags.flatMap((tag) => [tag, ...conceptFragments(tag)])
+    };
+  })
 );
 
 const idf = computed(() => {
@@ -72,7 +91,7 @@ const idf = computed(() => {
   return scores;
 });
 
-const queryTokens = computed(() => expandSynonyms(tokenize(query.value)));
+const queryTokens = computed(() => buildSearchTokens(query.value));
 const selectedTokens = computed(() => new Set(queryTokens.value));
 
 const tags = computed(() => {
@@ -89,21 +108,22 @@ const tags = computed(() => {
 });
 
 const rankedProfessors = computed(() => {
-  const queryVector = vectorize(queryTokens.value);
-  const hasQuery = queryTokens.value.length > 0;
+  const queryTokenList = queryTokens.value;
+  const queryTokenSet = selectedTokens.value;
+  const queryVector = vectorize(queryTokenList);
+  const hasQuery = queryTokenList.length > 0;
 
   return documents.value
     .map((professor) => {
       const professorVector = vectorize(professor.tokens);
       const cosine = hasQuery ? cosineSimilarity(queryVector, professorVector) : 0;
       const fuzzy = hasQuery ? fuzzyScore(query.value, professor) : 0;
-      const coverage = hasQuery ? matchedCoverage(queryTokens.value, professor.tokens) : 0;
-      const rawScore = cosine * 0.58 + fuzzy * 0.2 + coverage * 0.22;
+      const coverage = hasQuery ? matchedCoverage(queryTokenList, professor.tokens, professor.tokenSet) : 0;
+      const semantic = hasQuery ? semanticSimilarity(queryTokenList, professor.tokens) : 0;
+      const tagBoost = hasQuery ? tagSimilarity(queryTokenList, professor.searchableTags) : 0;
+      const rawScore = cosine * 0.36 + fuzzy * 0.16 + coverage * 0.2 + semantic * 0.16 + tagBoost * 0.12;
       const score = hasQuery ? Math.min(96, Math.round(rawScore * 100)) : 0;
-      const matched = professor.tokens
-        .filter((token) => selectedTokens.value.has(token))
-        .filter((token, index, arr) => arr.indexOf(token) === index)
-        .slice(0, 8);
+      const matched = matchReasons(professor, queryTokenList, queryTokenSet);
 
       return {
         ...professor,
@@ -158,7 +178,7 @@ async function fetchProfessors() {
 }
 
 function tokenize(text, useDictionary = true) {
-  const source = String(text || '').toLowerCase();
+  const source = normalizeSearchText(text);
   const terms = new Set();
   const latinWords = source.match(/[a-z0-9+#.]+/g) || [];
   latinWords.forEach((word) => {
@@ -180,6 +200,35 @@ function tokenize(text, useDictionary = true) {
     });
 
   return [...terms];
+}
+
+function buildSearchTokens(text) {
+  const expanded = expandSynonyms(tokenize(text));
+  const tokens = expanded.reduce((tokenSet, token) => {
+    tokenSet.add(token);
+    normalizeTerm(token)
+      .split(/[，。；、\s,./()（）]+/)
+      .filter(Boolean)
+      .forEach((part) => tokenSet.add(part));
+    conceptFragments(token).forEach((part) => tokenSet.add(part));
+    return tokenSet;
+  }, new Set());
+
+  return [...tokens];
+}
+
+function normalizeSearchText(value) {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/網安/g, '網路安全')
+    .replace(/資安/g, '資訊安全')
+    .replace(/雲端運算/g, '雲端計算')
+    .replace(/大數據/g, '巨量資料')
+    .replace(/生成式ai/g, '生成式人工智慧')
+    .replace(/vr/g, '虛擬實境')
+    .replace(/ar/g, '擴增實境')
+    .replace(/xr/g, '延展實境')
+    .replace(/iot/g, '物聯網');
 }
 
 function expandSynonyms(tokens) {
@@ -222,25 +271,117 @@ function cosineSimilarity(a, b) {
 }
 
 function fuzzyScore(input, professor) {
-  const normalized = `${professor.name} ${professor.description}`.toLowerCase();
+  const normalized = professor.normalizedText || normalizeSearchText(`${professor.name} ${professor.description}`);
+  const candidates = professor.fuzzyTokens || tokenize(normalized);
   const tokens = tokenize(input);
   if (!tokens.length) return 0;
-  const hits = tokens.filter((token) => normalized.includes(token)).length;
-  return hits / tokens.length;
+  const hits = tokens.map((token) => {
+    if (normalized.includes(token)) return 1;
+    return bestTokenSimilarity(token, candidates);
+  });
+  return hits.reduce((sum, score) => sum + score, 0) / tokens.length;
 }
 
-function matchedCoverage(queryTokensList, professorTokens) {
+function matchedCoverage(queryTokensList, professorTokens, professorTokenSet = new Set(professorTokens)) {
   if (!queryTokensList.length || !professorTokens.length) return 0;
-  const professorSet = new Set(professorTokens);
-  const hits = queryTokensList.filter((token) => professorSet.has(token)).length;
+  const hits = queryTokensList.filter((token) => professorTokenSet.has(token) || bestTokenSimilarity(token, professorTokens) >= 0.62).length;
   return hits / queryTokensList.length;
+}
+
+function semanticSimilarity(queryTokensList, professorTokens) {
+  if (!queryTokensList.length || !professorTokens.length) return 0;
+  const total = queryTokensList.reduce((sum, token) => sum + bestTokenSimilarity(token, professorTokens), 0);
+  return total / queryTokensList.length;
+}
+
+function tagSimilarity(queryTokensList, searchableTags) {
+  if (!queryTokensList.length || !searchableTags.length) return 0;
+  return Math.max(...queryTokensList.map((token) => bestTokenSimilarity(token, searchableTags)), 0);
+}
+
+function matchReasons(professor, queryTokensList, queryTokenSet) {
+  const candidates = [...professor.tags, ...professor.tokens];
+  return candidates
+    .filter((token) => !weakConcepts.has(token))
+    .filter((token) => queryTokenSet.has(token) || bestTokenSimilarity(token, queryTokensList) >= 0.62)
+    .filter((token, index, arr) => arr.indexOf(token) === index)
+    .sort((a, b) => Number(professor.tagSet.has(b)) - Number(professor.tagSet.has(a)) || b.length - a.length)
+    .slice(0, 8);
+}
+
+function bestTokenSimilarity(token, candidates) {
+  if (!token || !candidates.length) return 0;
+  return Math.max(...candidates.map((candidate) => tokenSimilarity(token, candidate)), 0);
+}
+
+function tokenSimilarity(a, b) {
+  const left = normalizeTerm(a);
+  const right = normalizeTerm(b);
+  if (!left || !right) return 0;
+  if (left === right) return 1;
+  if (left.includes(right) || right.includes(left)) {
+    return Math.min(left.length, right.length) / Math.max(left.length, right.length);
+  }
+
+  const charScore = overlapScore([...left], [...right]);
+  const bigramScore = overlapScore(toNgrams(left, 2), toNgrams(right, 2));
+  return Math.max(charScore, bigramScore);
+}
+
+function normalizeTerm(value) {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/\s+/g, '')
+    .replace(/工程/g, '工學')
+    .replace(/網安/g, '網路安全')
+    .replace(/資安/g, '資訊安全')
+    .replace(/雲端運算/g, '雲端計算')
+    .replace(/大數據/g, '巨量資料')
+    .replace(/生成式ai/g, '生成式人工智慧')
+    .replace(/vr/g, '虛擬實境')
+    .replace(/ar/g, '擴增實境')
+    .replace(/xr/g, '延展實境')
+    .replace(/iot/g, '物聯網');
+}
+
+function conceptFragments(value) {
+  const normalized = normalizeTerm(value);
+  if (!/[\u4e00-\u9fff]/.test(normalized) || normalized.length < 3) return [];
+  const fragments = new Set();
+  [2, 3].forEach((size) => {
+    toNgrams(normalized, size).forEach((part) => {
+      if (part.length >= 2 && !stopWords.has(part) && !weakConcepts.has(part)) {
+        fragments.add(part);
+      }
+    });
+  });
+  return [...fragments];
+}
+
+function toNgrams(value, size) {
+  if (value.length <= size) return [value];
+  return Array.from({ length: value.length - size + 1 }, (_, index) => value.slice(index, index + size));
+}
+
+function overlapScore(left, right) {
+  if (!left.length || !right.length) return 0;
+  const rightCounts = right.reduce((counts, item) => {
+    counts[item] = (counts[item] || 0) + 1;
+    return counts;
+  }, {});
+  const overlap = left.reduce((count, item) => {
+    if (!rightCounts[item]) return count;
+    rightCounts[item] -= 1;
+    return count + 1;
+  }, 0);
+  return (overlap * 2) / (left.length + right.length);
 }
 
 // 修改自 tokenize 的標籤提取邏輯
 function extractTags(text) {
   const candidates = tokenize(text)
     .filter((word) => word.length >= 2)
-    .filter((word) => !['資訊', '技術', '系統', '設計', '應用', '研究'].includes(word));
+    .filter((word) => !weakConcepts.has(word));
 
   return candidates.slice(0, 5);
 }
